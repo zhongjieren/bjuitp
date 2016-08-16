@@ -1,12 +1,12 @@
 /*!
- * B-JUI v1.0 (http://b-jui.com)
+ * B-JUI  v1.2 (http://b-jui.com)
  * Git@OSC (http://git.oschina.net/xknaan/B-JUI)
  * Copyright 2014 K'naan (xknaan@163.com).
  * Licensed under Apache (http://www.apache.org/licenses/LICENSE-2.0)
  */
 
 /* ========================================================================
- * B-JUI: bjui-dialog.js v1.0
+ * B-JUI: bjui-dialog.js  v1.2
  * @author K'naan (xknaan@163.com)
  * -- Modified from dwz.dialog.js, dwz.dialogDrag.js, dwz.resize.js (author:Roger Wu)
  * http://git.oschina.net/xknaan/B-JUI/blob/master/BJUI/js/bjui-dialog.js
@@ -30,19 +30,7 @@
             shadow     = 'dialogShadow'
             zindex     = Dialog.ZINDEX
             
-            var dr          = BJUI.regional.dialog
-            var dialogProxy = 
-                FRAG.dialogProxy
-                    .replace('#close#', dr.close)
-                    .replace('#maximize#', dr.maximize)
-                    .replace('#restore#', dr.restore)
-                    .replace('#minimize#', dr.minimize)
-                    .replace('#title#', dr.title)
-            
-            $('body')
-                .append('<!-- dialog resizable -->').append(FRAG.resizable)
-                .append('<!-- dialog drag  -->').append(dialogProxy)
-                .append('<!-- dialog mask -->').append(FRAG.dialogMask)
+            $('body').append('<!-- dialog resizable -->').append(FRAG.resizable)
         }
         
         INIT_DIALOG()
@@ -62,6 +50,7 @@
         url         : undefined,
         type        : 'GET',
         data        : {},
+        loadingmask : true,
         width       : 500,
         height      : 300,
         minW        : 65,
@@ -117,7 +106,7 @@
                 
                 if (options.url) {
                     $dialogContent.ajaxUrl({
-                        type:options.type || 'GET', url:options.url, data:options.data || {}, callback:function(response) {
+                        type:options.type || 'GET', url:options.url, data:options.data || {}, loadingmask:options.loadingmask, callback:function(response) {
                             if (onLoad) onLoad.apply(that, [$dialog])
                             if (BJUI.ui.clientPaging && $dialog.data('bjui.clientPaging')) $dialog.pagination('setPagingAndOrderby', $dialog)
                         }
@@ -136,9 +125,8 @@
                 var $dialogContent = $dialog.find('> .dialogContent')
                 
                 $dialogContent
-                    .css({width:(width - 0), height:(height - $dialog.find('> .dialogHeader').outerHeight() - 6)})
-                    .find('[data-layout-h]')
-                    .layoutH($dialogContent)
+                    .css({width:(width - 12), height:(height - $dialog.find('> .dialogHeader').outerHeight() - 6)})
+                    .resizePageH()
                 
                 $(window).trigger(BJUI.eventType.resizeGrid)
             }
@@ -153,7 +141,8 @@
         var $dialog = $body.data(options.id)
         
         if (!options.target || !$(options.target).length) {
-            if (!(options.url)) {
+            if (!options.url && options.href) options.url = options.href
+            if (!options.url) {
                 BJUI.debug('Dialog Plugin: Error trying to open a dialog, url is undefined!')
                 return
             } else {
@@ -191,7 +180,7 @@
             $dialog = $(dialog)
                 .data('options', options)
                 .data('initOptions', options)
-                .css('zIndex', (zindex += 2))
+                .css('zIndex', (zindex += 1))
                 .hide()
                 .appendTo($body)
             
@@ -271,12 +260,13 @@
     Dialog.prototype.addMask = function($dialog) {
         var $mask = $dialog.data('bjui.dialog.mask')
         
+        $dialog.wrap('<div style="z-index:'+ zindex +'" class="bjui-dialog-wrap"></div>')
+        $dialog.find('> .dialogHeader > a.minimize').hide()
         if (!$mask || !$mask.length) {
             $mask = $(FRAG.dialogMask)
-            $mask.appendTo('body').css('zIndex', zindex - 1).show()
+            $mask.css('zIndex', 1).show().insertBefore($dialog)
             $dialog.data('bjui.dialog.mask', $mask)
         }
-        $dialog.find('> .dialogHeader > a.minimize').hide()
     }
     
     Dialog.prototype.refresh = function(id) {
@@ -297,59 +287,65 @@
         }
     }
     
-    Dialog.prototype.reload = function(option) {
+    Dialog.prototype.reload = function(option, initOptionFlag) {
         var that    = this
         var options = $.extend({}, typeof option == 'object' && option)
         var $dialog = (options.id && $('body').data(options.id)) || that.getCurrent()
-
-        if ($dialog) {
-            var op = $dialog.data('initOptions') || options
+        
+        if ($dialog && $dialog.length) {
+            var initOptions = $dialog.data('initOptions'), op = $.extend({}, initOptions, options)
             var _reload = function() {
                 var $dialogContent = $dialog.find('> .dialogContent')
                 
-                if (options.width != op.width) {
-                    if (!options.max) {
-                        $dialog.animate({ width:options.width}, 'normal', function() { $dialogContent.width(options.width) })
+                if (initOptions.width != op.width) {
+                    if (!op.max) {
+                        $dialog.animate({ width:op.width}, 'normal', function() { $dialogContent.width(op.width) })
                     } else {
-                        $dialog.width(options.width)
-                        $dialogContent.width(options.width)
+                        $dialog.width(op.width)
+                        $dialogContent.width(op.width)
                     }
                 }
-                if (options.height != op.height) {
-                    if (!options.max) {
-                        $dialog.animate({ height:options.height }, 'normal', function() {
-                            $dialogContent.height(options.height - $dialog.find('> .dialogHeader').outerHeight() - 6).find('[data-layout-h]').layoutH($dialogContent)
+                if (initOptions.height != op.height) {
+                    if (!op.max) {
+                        $dialog.animate({ height:op.height }, 'normal', function() {
+                            $dialogContent.height(op.height - $dialog.find('> .dialogHeader').outerHeight() - 6).resizePageH()
                         })
                     } else {
-                        $dialog.height(options.height)
-                        $dialogContent.height(options.height - $dialog.find('> .dialogHeader').outerHeight() - 6)
+                        $dialog.height(op.height)
+                        $dialogContent.height(op.height - $dialog.find('> .dialogHeader').outerHeight() - 6)
                     }
                 }
-                if (options.maxable != op.maxable) {
-                    if (options.maxable) $dialog.find('a.maximize').show()
+                if (initOptions.maxable != op.maxable) {
+                    if (op.maxable) $dialog.find('a.maximize').show()
                     else $dialog.find('a.maximize').hide()
                 } 
-                if (options.minable != op.minable) {
-                    if (options.minable) $dialog.find('a.minimize').show()
+                if (initOptions.minable != op.minable) {
+                    if (op.minable) $dialog.find('a.minimize').show()
                     else $dialog.find('a.minimize').hide()
                 }
-                if (options.max != op.max && options.max) setTimeout(that.maxsize($dialog), 10)
-                if (options.mask != op.mask) {
-                    if (options.mask) {
+                if (initOptions.max != op.max && op.max) setTimeout(that.maxsize($dialog), 10)
+                if (initOptions.mask != op.mask) {
+                    if (op.mask) {
                         that.addMask($dialog)
                         if ($.fn.taskbar) that.$element.taskbar('closeDialog', op.id)
-                    } else if (options.minable && $.fn.taskbar) {
-                        that.$element.taskbar({id:op.id, title:options.title || op.title})
+                    } else if (op.minable && $.fn.taskbar) {
+                        that.$element.taskbar({id:op.id, title:op.title})
                     }
                 }
-                if (options.title != op.title) $dialog.find('> .dialogHeader > h1 > span.title').html(options.title)
+                if (initOptions.title != op.title) {
+                    $dialog.find('> .dialogHeader > h1 > span.title').html(op.title)
+                    $dialog.taskbar('changeTitle', op.id, op.title)
+                }
                 
-                $dialog.data('options', $.extend({}, op, options))
-                that.tools.reload($dialog, options)
+                $dialog.data('options', op)
+                
+                if (!initOptionFlag) $dialog.data('initOptions', op)
+                
+                that.tools.reload($dialog, op)
             }
             
-            if (options.reloadWarn) {
-                $dialog.alertmsg('confirm', options.reloadWarn, {
+            if (op.reloadWarn) {
+                $dialog.alertmsg('confirm', op.reloadWarn, {
                     okCall: function() {
                         _reload()
                     }
@@ -374,27 +370,29 @@
                 if (option.title) $dialog.find('> .dialogHeader > h1 > span.title').html(option.title)
                 options = $.extend({}, option, $dialog.data('options'))
             }
-            var $pagerForm = $dialog.find('#pagerForm'), data = {}
+            var $pagerForm = $dialog.find('#pagerForm'), data = {}, pageData = {}
             
+            if ($pagerForm.attr('action')) options.url = $pagerForm.attr('action')
             if ($pagerForm && $pagerForm.length) {
+                pageData = $pagerForm.serializeJson()
                 if (!option || !option.type) options.type = $pagerForm.attr('method') || 'POST'
-                options.data = $pagerForm.serializeJson()
-                
                 if (clearQuery) {
                     var pageInfo = BJUI.pageInfo
                     
                     for (var key in pageInfo) {
-                        data[pageInfo[key]] = options.data[pageInfo[key]]
+                        data[pageInfo[key]] = pageData[pageInfo[key]]
                     }
-                    options.data = data
+                } else {
+                    data = pageData
                 }
+                options.data = $.extend({}, options.data || {}, data)
             }
             
-            this.tools.reload($dialog, options)
+            this.reload(options, true)
         }
     }
     
-    Dialog.prototype.getCurrent = function(){
+    Dialog.prototype.getCurrent = function() {
         return $current
     }
     
@@ -431,19 +429,27 @@
             return
         }
         if (options.target && target) $(options.target).html(target) 
-        if ($mask && $mask.length) $mask.remove()
-        else if ($.fn.taskbar) this.$element.taskbar('closeDialog', options.id)
+        if ($mask && $mask.length) {
+            $mask.remove()
+            $dialog.unwrap()
+        } else if ($.fn.taskbar) {
+            this.$element.taskbar('closeDialog', options.id)
+        }
         
         $dialog.animate({top:-$dialog.outerHeight(), opacity:0.1}, 'normal', function() {
             $('body').removeData(options.id)
             $dialog.trigger(BJUI.eventType.beforeCloseDialog).remove()
             if (onClose) onClose.apply(that)
             
-            var $dialogs  = $('body').find('> .bjui-dialog-container')
+            var $dialogs  = $('body').find('.bjui-dialog-container')
             var $_current = undefined
             
-            if ($dialogs.length) $_current = that.$element.getMaxIndexObj($dialogs)
-            else zindex = Dialog.ZINDEX
+            if ($dialogs.length) {
+                $_current = that.$element.getMaxIndexObj($dialogs)
+            } else {
+                zindex   = Dialog.ZINDEX
+                $current = null
+            }
             if ($_current && $_current.is(':visible')) that.switchDialog($_current)
         })
     }
@@ -501,26 +507,16 @@
     Dialog.prototype.drag = function(e, $dialog) {
         var $shadow = $('#bjui-dialogProxy')
         
-        if (!$shadow.size()) $shadow = $(FRAG.dialogProxy).appendTo($('body'))
-        $shadow.find('> div.dialogHeader > h1').html($dialog.find('> div.dialogHeader > h1').html())
-        $shadow.find('> div.dialogContent').css('height', $dialog.find('> div.dialogContent').css('height'))
-        $shadow
-            .css({
-                left   : $dialog.css('left'),
-                top    : $dialog.css('top'),
-                height : $dialog.css('height'),
-                width  : $dialog.css('width'),
-                zIndex : parseInt($dialog.css('zIndex'))
-            })
-            .show()
-        $dialog.css({left:'-10000px', top:'-10000px'})
-        $shadow.basedrag({
-            selector: '> .dialogHeader',
-            stop: function() {
-                $dialog.css({left:$shadow.css('left'), top:$shadow.css('top')})
-                $shadow.hide()
+        $dialog.find('> .dialogContent').css('opacity', '.3')
+        $dialog.basedrag({
+            selector : '> .dialogHeader',
+            stop     : function() {
+                $dialog
+                    .css({left:$dialog.css('left'), top:$dialog.css('top')})
+                    .find('> .dialogContent').css('opacity', 1)
             },
-            event: e
+            event    : e,
+            nounbind : true
         })
     }
     
@@ -534,19 +530,19 @@
         if (target == 'n' || target == 'nw') tmove = parseInt($dialog.css('top')) - otop
         else tmove = height - parseInt($dialog.css('height'))
         
+        if (otop < 0) otop = 0
+        
         $dialog
             .css({top:otop, left:oleft, width:width + 2, height:height + 1})
-            .find('> .dialogContent').css('width', (width - 0))
+            .find('> .dialogContent').css('width', (width - 10))
         
         if (target != 'w' && target != 'e') {
             var $dialogContent = $dialog.find('> .dialogContent')
             
             $dialogContent
                 .css({height:height - $dialog.find('> .dialogHeader').outerHeight() - 6})
-                .find('[data-layout-h]')
-                .layoutH($dialogContent)
+                .resizePageH()
         }
-        
         $(window).trigger(BJUI.eventType.resizeGrid)
     }
     
@@ -590,7 +586,10 @@
         var lmove     = (e.pageX || e.screenX) - current.ox
         var tmove     = (e.pageY || e.clientY) - current.oy
         
-        if ((e.pageY || e.clientY) <= 0 || (e.pageY || e.clientY) >= ($(window).height() - current.$dialog.find('> .dialogHeader').outerHeight())) return
+        var $mask = current.$dialog.data('bjui.dialog.mask')
+        
+        if (!$mask || !$mask.length)
+            if ((e.pageY || e.clientY) <= 0 || (e.pageY || e.clientY) >= ($(window).height() - current.$dialog.find('> .dialogHeader').outerHeight())) return
         
         var target = current.target
         var width  = current.owidth
@@ -636,17 +635,17 @@
         
         return this.each(function () {
             var $this   = $(this)
-            var options = $.extend({}, Dialog.DEFAULTS, $this.data(), typeof option == 'object' && option)
+            var options = $.extend({}, Dialog.DEFAULTS, typeof option == 'object' && option)
             var data    = $this.data('bjui.dialog')
             
             if (!data) $this.data('bjui.dialog', (data = new Dialog(this, options)))
-            else if (data.options.id && data.options.id != options.id) $this.data('bjui.dialog', (data = new Dialog(this, options)))
             
             if (typeof property == 'string' && $.isFunction(data[property])) {
                 [].shift.apply(args)
                 if (!args) data[property]()
                 else data[property].apply(data, args)
             } else {
+                data = new Dialog(this, options)
                 data.open()
             }
         })
@@ -669,14 +668,18 @@
     // ==============
 
     $(document).on('click.bjui.dialog.data-api', '[data-toggle="dialog"]', function(e) {
-        var $this   = $(this)
-        var options = $this.data()
+        var $this   = $(this), href = $this.attr('href'), data = $this.data(), options = data.options
         
-        if (!options.url)   options.url   = $this.attr('href')
-        if (!options.id)    options.id    = 'dialog'
-        if (!options.title) options.title = $this.text()
+        if (options) {
+            if (typeof options == 'string') options = options.toObj()
+            if (typeof options == 'object')
+                $.extend(data, options)
+        }
         
-        Plugin.call($this, options)
+        if (!data.title) data.title = $this.text()
+        if (href && !data.url) data.url = href
+        
+        Plugin.call($this, data)
         
         e.preventDefault()
     })

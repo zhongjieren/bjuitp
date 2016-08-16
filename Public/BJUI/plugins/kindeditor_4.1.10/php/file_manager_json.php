@@ -6,17 +6,16 @@
  * 如果您确定直接使用本程序，使用之前请仔细确认相关安全设置。
  *
  */
- 
-require_once 'JSON.php';
 
+require_once 'JSON.php';
 
 $php_path = dirname(__FILE__) . '/';
 $php_url = dirname($_SERVER['PHP_SELF']) . '/';
 
 //根目录路径，可以指定绝对路径，比如 /var/www/attached/
-$root_path = $php_path . '../../../../../uploads/kindeditor/';
+$root_path = $php_path . '../attached/';
 //根目录URL，可以指定绝对路径，比如 http://www.yoursite.com/attached/
-$root_url = $php_url . '../../../../../uploads/kindeditor/';
+$root_url = $php_url . '../attached/';
 //图片扩展名
 $ext_arr = array('gif', 'jpg', 'jpeg', 'png', 'bmp');
 

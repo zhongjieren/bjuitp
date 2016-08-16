@@ -1,12 +1,12 @@
 /*!
- * B-JUI v1.0 (http://b-jui.com)
+ * B-JUI  v1.2 (http://b-jui.com)
  * Git@OSC (http://git.oschina.net/xknaan/B-JUI)
  * Copyright 2014 K'naan (xknaan@163.com).
  * Licensed under Apache (http://www.apache.org/licenses/LICENSE-2.0)
  */
 
 /* ========================================================================
- * B-JUI: bjui-extends.js v1.0
+ * B-JUI: bjui-extends.js  v1.2
  * @author K'naan (xknaan@163.com)
  * -- Modified from dwz.core.js (author:ZhangHuihua@msn.com)
  * http://git.oschina.net/xknaan/B-JUI/blob/master/BJUI/js/bjui-extends.js
@@ -25,7 +25,11 @@
         ajaxUrl: function(op) {
             var $this = $(this)
             
-            $this.trigger(BJUI.eventType.beforeAjaxLoad).trigger(BJUI.eventType.ajaxStatus)
+            $this.trigger(BJUI.eventType.beforeAjaxLoad)
+            
+            if (op.loadingmask) {
+                $this.trigger(BJUI.eventType.ajaxStatus)
+            }
             
             $.ajax({
                 type     : op.type || 'GET',
@@ -35,23 +39,28 @@
                 dataType : 'html',
                 timeout  : BJUI.ajaxTimeout,
                 success  : function(response) {
-                    var json = response.toJson()
+                    var json = response.toJson(), $ajaxMask = $this.find('> .bjui-ajax-mask')
                     
                     if (!json[BJUI.keys.statusCode]) {
-                        $this.html(response).initui()
+                        $this.empty().html(response).append($ajaxMask).initui()
                         if ($.isFunction(op.callback)) op.callback(response)
                     } else {
                         if (json[BJUI.keys.statusCode] == BJUI.statusCode.error) {
                             if (json[BJUI.keys.message]) $this.alertmsg('error', json[BJUI.keys.message])
-                        } else if (json[BJUI.keys.statusCode] == BJUI.statusCode.timeout) {
-                            if (!$this.children().not('.bjui-maskBackground, .bjui-maskProgress').length) {
-                                if ($this.closest('.bjui-dialog').length) $this.dialog('closeCurrent')
-                                if ($this.closest('.navtab-panel').length) $this.navtab('closeCurrent')
+                            if (!$this.closest('.bjui-layout').length) {
+                                if ($this.closest('.navtab-panel').length) $this.navtab('closeCurrentTab')
+                                else $this.dialog('closeCurrent')
                             }
-                            $('body').alertmsg('error', (json[BJUI.keys.message] || BJUI.regional.sessiontimeout),
-                                { okCall:function() { BJUI.loadLogin() } }
-                            )
+                        } else if (json[BJUI.keys.statusCode] == BJUI.statusCode.timeout) {
+                            if ($this.closest('.bjui-dialog').length) $this.dialog('closeCurrent')
+                            if ($this.closest('.navtab-panel').length) $this.navtab('closeCurrentTab')
+                            
+                            $('body').alertmsg('info', (json[BJUI.keys.message] || BJUI.regional.sessiontimeout))
+                            BJUI.loadLogin()
                         }
+                        $ajaxMask.fadeOut('normal', function() {
+                            $(this).remove()
+                        })
                     }
                 },
                 error      : function(xhr, ajaxOptions, thrownError) {
@@ -60,6 +69,7 @@
                         if ($this.closest('.navtab-panel').length) $this.navtab('closeCurrentTab')
                         else $this.dialog('closeCurrent')
                     }
+                    $this.trigger('bjui.ajaxError')
                 },
                 statusCode : {
                     503: function(xhr, ajaxOptions, thrownError) {
@@ -71,60 +81,79 @@
         loadUrl: function(url,data,callback) {
             $(this).ajaxUrl({url:url, data:data, callback:callback})
         },
-        /**
-         * adjust component inner reference box height
-         * @param {Object} refBox: reference box jQuery Obj
-         */
-        layoutH: function($refBox) {
-            return this.each(function(i) {
-                var $box      = $(this)
-                var $unitBox  = null
-                var $fixedBox = null
-                
-                if (!$refBox || !$refBox.length) $refBox = $box.closest('.bjui-layout')
-                if (!$refBox || !$refBox.length) $refBox = $box.closest('div.layoutBox')
-                
-                var refH = $refBox.height() || parseInt($refBox.css('height'))
-                var layH = $box.data('bjuiLayH') || parseInt($box.data('layoutH')) || 0
-                var bodH = 0
-                
-                if (!layH) {
-                    $unitBox  = $box.closest('div.bjui-layout')
-                    if (!$unitBox || !$unitBox.length) $unitBox = $box.closest('div.unitBox')
-                    
-                    $unitBox.find('.bjui-layout').find('[data-layout-fixed]').hide()
-                    $unitBox.find('.bjui-layout').find('.bjui-tablefixed').hide()
-                    
-                    var fixedH     = 0
-                    var fixedBoxH  = 0
-                    var fixedTh    = 0
-                    
-                    $unitBox.find('[data-layout-fixed]:visible').each(function() {
-                        fixedH += $(this).outerHeight() || 0
-                    })
-                    
-                    $fixedBox = $unitBox.find('.bjui-tablefixed:visible')
-                    if (!$fixedBox.hasClass('fixedH') && $fixedBox.length) {
-                        if ($fixedBox[0].scrollWidth > $fixedBox[0].clientWidth || $fixedBox[0].scrollWidth > $fixedBox[0].offsetWidth) {
-                            fixedBoxH = $fixedBox[0].offsetHeight - $fixedBox[0].clientHeight
-                        }
-                        fixedTh = $fixedBox.find('.fixedtableHeader').outerHeight() || 0
+        doAjax: function(op) {
+            var $this = $(this), $target, $ajaxMask
+            
+            if (!op.url) {
+                BJUI.debug('The ajax url is undefined!')
+                return
+            }
+            if (!op.callback) {
+                BJUI.debug('The ajax callback is undefined!')
+                return
+            } else {
+                op.callback = op.callback.toFunc()
+            }
+            if (op.loadingmask) {
+                $target = $this.getPageTarget()
+                $target.trigger(BJUI.eventType.ajaxStatus)
+                $ajaxMask = $target.find('> .bjui-ajax-mask')
+            }
+            if (!op.type) op.type = 'POST'
+            if (!op.dataType) op.dataType = 'json'
+            if (!op.cache) op.cache = false
+            op.timeout = BJUI.ajaxTimeout
+            op.success = function(response) {
+                if ($ajaxMask) {
+                    if (op.callback) {
+                        $.when(op.callback(response)).done(function() {
+                            $target.trigger('bjui.ajaxStop')
+                        })
+                    } else {
+                        $target.trigger('bjui.ajaxStop')
                     }
-                    $unitBox.find('.bjui-layout').find('[data-layout-fixed]').show()
-                    $unitBox.find('.bjui-layout').find('.bjui-tablefixed').show()
-                    bodH = refH - fixedH - fixedBoxH - fixedTh
-                    $box.data('bjuiLayH', (fixedH + fixedBoxH + fixedTh))
                 } else {
-                    bodH = refH - layH > 50 ? refH - layH : 50
+                    op.callback(response)
                 }
-                if ($box.isTag('table') && !$box.parent('[data-layout-h]').length) {
-                    $box.removeAttr('data-layout-h').wrap('<div data-bjui-lay-h="'+ $box.data('bjuiLayH') +'" data-layout-h="'+ layH +'" style="overflow:auto;width:100%;height:'+ bodH +'px"></div>')
-                } else {
-                    $box.animate({ height:bodH }, 'fast', function() {
-                        $box.css('overflow', 'auto')
-                        $box.find('.bjui-layout').find('[data-layout-h]').layoutH()
-                    })
+            }
+            op.error = op.error || function(xhr, ajaxOptions, thrownError) {
+                $this.bjuiajax('ajaxError', xhr, ajaxOptions, thrownError)
+                if ($ajaxMask) {
+                    $target.trigger('bjui.ajaxError')
                 }
+            }
+            
+            $.ajax(op)
+        },
+        getPageTarget: function() {
+            var $target
+            
+            if (this.closest('.bjui-layout').length) $target = this.closest('.bjui-layout')
+            else if (this.closest('.navtab-panel').length) $target = $.CurrentNavtab
+            else $target = $.CurrentDialog
+            
+            return $target
+        },
+        resizePageH: function() {
+            return this.each(function() {
+                if ($(this).closest('.tab-content').length) return
+                
+                var $box         = $(this),
+                    $pageHeader  = $box.find('> .bjui-pageHeader'),
+                    $pageContent = $box.find('> .bjui-pageContent'),
+                    $pageFooter  = $box.find('> .bjui-pageFooter'),
+                    headH        = $pageHeader.outerHeight() || 0,
+                    footH        = $pageFooter.outerHeight() || 0
+                
+                if ($box.hasClass('navtabPage') && $box.is(':hidden')) {
+                    $box.show()
+                    headH = $pageHeader.outerHeight() || 0
+                    footH = $pageFooter.outerHeight() || 0
+                    $box.hide()
+                }
+                if ($pageFooter.css('bottom')) footH += parseInt($pageFooter.css('bottom')) || 0
+                if (footH == 0 && $box.hasClass('dialogContent')) footH = 5
+                $pageContent.css({top:headH, bottom:footH})
             })
         },
         getMaxIndexObj: function($elements) {
@@ -162,7 +191,8 @@
             return o
         },
         isTag: function(tn) {
-            if(!tn) return false
+            if (!tn) return false
+            if (!$(this).prop('tagName')) return false
             return $(this)[0].tagName.toLowerCase() == tn ? true : false
         },
         /**
@@ -194,8 +224,11 @@
         isInteger: function() {
             return (new RegExp(/^\d+$/).test(this))
         },
-        isNumber: function(value, element) {
-            return (new RegExp(/^-?(?:\d+|\d{1,3}(?:,\d{3})+)(?:\.\d+)?$/).test(this))
+        isNumber: function() {
+            return (new RegExp(/^([-]{0,1}(\d+)[\.]+(\d+))|([-]{0,1}(\d+))$/).test(this))
+        },
+        includeChinese: function() {
+        	return (new RegExp(/[\u4E00-\u9FA5]/).test(this))
         },
         trim: function() {
             return this.replace(/(^\s*)|(\s*$)|\r|\n/g, '')
@@ -250,7 +283,7 @@
             })
         },
         isFinishedTm: function() {
-            return !(new RegExp('{.*}').test(this))
+            return !(new RegExp('{\/?[^}]*}').test(this))
         },
         skipChar: function(ch) {
             if (!this || this.length===0) return ''
@@ -294,6 +327,17 @@
                 return this
             }
         },
+        toObj: function() {
+            var obj = null
+            
+            try {
+                obj = (new Function('return '+ this))()
+            } catch (e) {
+                obj = this
+                BJUI.debug('String toObj：Parse "String" to "Object" error! Your str is: '+ this)
+            }
+            return obj
+        },
         /**
          * String to Function
          * 参数(方法字符串或方法名)： 'function(){...}' 或 'getName' 或 'USER.getName' 均可
@@ -319,13 +363,121 @@
             }
             
             return undefined
+        },
+        setUrlParam: function(key, value) {
+            var str = '', url = this
+            
+            if (url.indexOf('?') != -1)
+                str = url.substr(url.indexOf('?') + 1)
+            else
+                return url + '?' + key + '=' + value
+            
+            var returnurl = '', setparam = '', arr, modify = '0'
+            
+            if (str.indexOf('&') != -1) {
+                arr = str.split('&')
+                
+                for (var i in arr) {
+                    if (arr[i].split('=')[0] == key) {
+                        setparam = value
+                        modify = '1'
+                    } else {
+                        setparam = arr[i].split('=')[1]
+                    }
+                    returnurl = returnurl + arr[i].split('=')[0] + '=' + setparam + '&'
+                }
+                
+                returnurl = returnurl.substr(0, returnurl.length - 1)
+                if (modify == '0') {
+                    if (returnurl == str)
+                        returnurl = returnurl + '&' + key + '=' + value
+                }   
+            } else {
+                if (str.indexOf('=') != -1) {
+                    arr = str.split('=')
+                    if (arr[0] == key) {
+                        setparam = value
+                        modify = '1'
+                    } else {
+                        setparam = arr[1]
+                    }
+                    returnurl = arr[0] + '=' + setparam
+                    if (modify == '0') {
+                        if (returnurl == str)
+                            returnurl = returnurl + '&' + key + '=' + value
+                    }
+                } else {
+                    returnurl = key + '=' + value
+                }
+            }
+            return url.substr(0, url.indexOf('?')) + '?' + returnurl
         }
     })
     
+    /* Function */
     $.extend(Function.prototype, {
         //to fixed String.prototype -> toFunc
         toFunc: function() {
             return this
         }
     })
+    
+    /* Array */
+    $.extend(Array.prototype, {
+        remove: function(index) {
+            if (index < 0) return this
+            else return this.slice(0, index).concat(this.slice(index + 1, this.length))
+        },
+        unique: function() {
+            var temp = new Array()
+            
+            this.sort()
+            for (var i = 0; i < this.length; i++) {
+                if (this[i] == this[i + 1]) continue
+                temp[temp.length] = this[i]
+            }
+            
+            return temp
+        },
+        myIndexOf: function(e) {
+            if (!this || !this.length) return -1
+            
+            for (var i = 0, j; j = this[i]; i++) {
+                if (j == e) return i
+            }
+            
+            return -1
+        },
+        /* serializeArray to json */
+        toJson: function() {
+            var o = {}
+            var a = this
+            
+            $.each(a, function () {
+                if (o[this.name] !== undefined) {
+                    if (!o[this.name].push) {
+                        o[this.name] = [o[this.name]]
+                    }
+                    o[this.name].push(this.value || '')
+                } else {
+                   o[this.name] = this.value || ''
+                }
+            })
+            
+            return o
+        }
+    })
+    
+    /* Global */
+    $.isJson = function(obj) {
+        var flag = true
+        
+        try {
+            flag = $.parseJSON(obj)
+        } catch (e) {
+            return false
+        }
+        return flag ? true : false
+    }
+    
 }(jQuery);

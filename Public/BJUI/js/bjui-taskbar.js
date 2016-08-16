@@ -1,12 +1,12 @@
 /*!
- * B-JUI v1.0 (http://b-jui.com)
+ * B-JUI  v1.2 (http://b-jui.com)
  * Git@OSC (http://git.oschina.net/xknaan/B-JUI)
  * Copyright 2014 K'naan (xknaan@163.com).
  * Licensed under Apache (http://www.apache.org/licenses/LICENSE-2.0)
  */
 
 /* ========================================================================
- * B-JUI: bjui-taskbar.js v1.0
+ * B-JUI: bjui-taskbar.js  v1.2
  * reference: bjui-dialog.js
  * @author K'naan (xknaan@163.com)
  * -- Modified from dwz.taskBar.js (author:Roger Wu)
@@ -90,8 +90,10 @@
                 } else {
                     if ($dialog.is(':hidden')) {
                         that.restoreDialog($dialog)
-                    } else
+                    } else {
                         $dialog.trigger('click')
+                        $task.addClass(taskSelected)
+                    }   
                 }
                 that.scrollCurrent($task)
             }
@@ -328,19 +330,18 @@
         return $taskList.find('#'+ id)
     }
     
+    Taskbar.prototype.changeTitle = function(id, title) {
+        var $task = this.getTask(id)
+        
+        if ($task && title) $task.find('.title').html(title)
+    }
+    
     Taskbar.prototype.show = function() {
-        if ($taskBar.is(':hidden')) {
-            $taskBar.css('top', $(window).height() - 34 + $taskBar.outerHeight()).show()
-            $taskBar.animate({top:$(window).height() - $taskBar.outerHeight()}, 500)
-        }
+        if ($taskBar.is(':hidden')) $taskBar.show().animate({bottom:0}, 500)
     }
     
     Taskbar.prototype.hide = function() {
-        $taskBar.animate({
-            top: $(window).height() - 29 + $taskBar.outerHeight(true)
-        }, 500, function() {
-            $taskBar.hide()
-        })
+        if ($taskBar.is(':visible')) $taskBar.animate({bottom:-50}, 500, function() { $taskBar.hide() })
     }
     
     // TASKBAR PLUGIN DEFINITION

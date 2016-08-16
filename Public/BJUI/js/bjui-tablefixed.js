@@ -1,12 +1,12 @@
 /*!
- * B-JUI v1.0 (http://b-jui.com)
+ * B-JUI  v1.2 (http://b-jui.com)
  * Git@OSC (http://git.oschina.net/xknaan/B-JUI)
  * Copyright 2014 K'naan (xknaan@163.com).
  * Licensed under Apache (http://www.apache.org/licenses/LICENSE-2.0)
  */
 
 /* ========================================================================
- * B-JUI: bjui-tablefixed.js v1.0
+ * B-JUI: bjui-tablefixed.js  v1.2
  * @author K'naan (xknaan@163.com)
  * -- Modified from dwz.stable.js (author:ZhangHuihua@msn.com, Roger Wu)
  * http://git.oschina.net/xknaan/B-JUI/blob/master/BJUI/js/bjui-tablefixed.js
@@ -144,10 +144,10 @@
         
         this.$container = this.$element.parent().addClass('bjui-resizeGrid')
         this.$fixed     = undefined
-        var width       = this.$container.innerWidth()
+        var width       = this.$container.width()
         var height      = this.options.height
         
-        if (this.$container.hasClass('tab-pane')) width = this.$container.parent().innerWidth() - 20
+        if (this.$container.hasClass('tab-pane')) width = this.$container.parent().width() - 20
         if (typeof this.options.width == 'string' && this.options.width.indexOf('%')) {
             this.options.newWidth = width * (this.options.width.replace('%', '') / 100)
         } else {
@@ -254,13 +254,32 @@
     }
     
     Tablefixed.prototype.initBody = function() {
+        var that      = this
         var $tbody    = this.$fixed.find('> tbody')
-        var layoutStr = ' data-layout-h="'+ (this.options.layoutH || 0) +'"'
         var styles    = this.options.styles
+        var style, height
         
-        if (this.options.height) layoutStr = 'style="height:'+ (this.options.height - this.$fixed.find('.fixedtableHeader').height()) +'px; overflow-y:auto;"'
+        if (this.options.height) {
+            height = (this.options.height - this.$fixed.find('.fixedtableHeader').height()) +'px'
+        } else {
+            height = '100%'
+            
+            var resizeH = function() {
+                var _height = that.$fixed.parent().height()
+                
+                that.$fixed.parent().css('overflow', 'hidden')
+                that.$fixed.height(_height)
+                    .find('.fixedtableScroller').height(_height - that.$fixed.find('.fixedtableHeader').height())
+            }
+            
+            $(document).one(BJUI.eventType.afterInitUI, function(e) {
+                resizeH()
+            })
+        }
+            
+        style = 'style="height:'+ height +'; overflow-y:auto;"'
         
-        $tbody.wrap('<div class="fixedtableScroller"'+ layoutStr +' style="width:'+ (this.options.newWidth) +'px;"><div class="fixedtableTbody"><table style="width:'+ (this.options.newWidth - Tablefixed.SCROLLW) +'px; max-width:'+ (this.options.newWidth - Tablefixed.SCROLLW) +'px;"></table></div></div>')
+        $tbody.wrap('<div class="fixedtableScroller"'+ style +' style="width:'+ (this.options.newWidth) +'px;"><div class="fixedtableTbody"><table style="width:'+ (this.options.newWidth - Tablefixed.SCROLLW) +'px; max-width:'+ (this.options.newWidth - Tablefixed.SCROLLW) +'px;"></table></div></div>')
         
         if (!this.$element.attr('class')) $tbody.parent().addClass('table table-striped table-bordered table-hover')
         else $tbody.parent().addClass(this.$element.attr('class'))
@@ -386,9 +405,23 @@
         var that = this
         var _resizeGrid = function() {
             $('div.bjui-resizeGrid').each(function() {
-                var $this = $(this), width  = $(this).innerWidth(), newWidth = that.options.newWidth
-                var realWidth
+                var $this  = $(this), $navtab = $this.closest('.navtabPage'),
+                    width  = $this.width(),
+                    height = $this.height(),
+                    $fixed = $this.find('.bjui-tablefixed'),
+                    fixedH = $fixed.find('.fixedtableThead').height(),
+                    newWidth = that.options.newWidth,
+                    realWidth
                 
+                if ($this.length && $this.is(':hidden')) {
+                    if (!$this.hasClass('tab-pane')) {
+                        $navtab.show()
+                        width  = $this.innerWidth()
+                        height = $this.height()
+                        fixedH = $fixed.find('.fixedtableHeader').height()
+                        $navtab.hide()
+                    }
+                }
                 if (width) {
                     $this.find('.bjui-tablefixed').each(function() {
                         var $fixed = $(this)
@@ -402,10 +435,24 @@
                         $fixed.find('.fixedtableScroller').width(realWidth)
                     })
                 }
+                
+                /* resizeH */
+                $this.css('overflow', 'hidden')
+                $fixed.height(height)
+                    .find('.fixedtableScroller').height(height - fixedH)
+                
             })
+            
+            var resizeH = function() {
+                var _height = that.$fixed.parent().height()
+                
+                that.$fixed.parent().css('overflow', 'hidden')
+                that.$fixed.height(_height)
+                    .find('.fixedtableScroller').height(_height - that.$fixed.find('.fixedtableHeader').height())
+            }
         }
         
-        $(window).off(BJUI.eventType.resizeGrid).on(BJUI.eventType.resizeGrid, _resizeGrid)
+        $(window).on(BJUI.eventType.resizeGrid, _resizeGrid)
     }
     
     
@@ -470,7 +517,7 @@
         var $this     = $(this),
             $table    = $this.closest('table'),
             multi     = $table.data('selectedMulti'),
-            id        = $this.data('id'),
+            id        = $this.attr('data-id'),
             clsName   = 'selected',
             $selected = $table.closest('.unitBox').find('#bjui-selected')
         
@@ -478,11 +525,12 @@
         if (multi) {
             id = []
             $this.siblings('.'+ clsName).add(($this.hasClass(clsName) ? $this : '')).each(function() {
-                id.push($(this).data('id'))
+                id.push($(this).attr('data-id'))
             })
             id = id.join(',')
         } else {
             $this.siblings().removeClass(clsName)
+            if (!$this.hasClass(clsName)) id = ''
         }
         if ($selected && $selected.length) {
             $selected.val(id)

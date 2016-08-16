@@ -1,12 +1,12 @@
 /*!
- * B-JUI v1.0 (http://b-jui.com)
+ * B-JUI  v1.2 (http://b-jui.com)
  * Git@OSC (http://git.oschina.net/xknaan/B-JUI)
  * Copyright 2014 K'naan (xknaan@163.com).
  * Licensed under Apache (http://www.apache.org/licenses/LICENSE-2.0)
  */
 
 /* ========================================================================
- * B-JUI: bjui-contextmenu.js v1.0
+ * B-JUI: bjui-contextmenu.js  v1.2
  * @author K'naan (xknaan@163.com)
  * -- Modified from dwz.contextmenu.js (author:ZhangHuihua@msn.com)
  * http://git.oschina.net/xknaan/B-JUI/blob/master/BJUI/js/bjui-contextmenu.js
@@ -93,7 +93,7 @@
         
         if ($(window).width() < posX + $menu.width())   posX -= $menu.width()
         if ($(window).height() < posY + $menu.height()) posY -= $menu.height()
-
+        
         $menu.css({'left':posX, 'top':posY}).show()
         if (cur.shadow)
             $shadow.css({width:$menu.width(), height:$menu.height(), left:posX + 3, top:posY + 3}).show()
@@ -114,7 +114,25 @@
         
         if (options.items && options.items.length) {
             that.$element.on('contextmenu', function(e) {
-                that.custom(options.items, e)
+                var isShow = true
+                
+                /*exclude*/
+                if (options.exclude) {
+                    that.$element.find(options.exclude).each(function() {
+                        if (this == e.target || $(this).find(e.target).length) {
+                            isShow = false
+                            return
+                        }
+                    })
+                }
+                
+                if (!isShow) {
+                    e.stopPropagation()
+                    return !isShow
+                } else {
+                    that.custom(options.items, e)
+                }
+                
                 return false
             })
         }
@@ -128,10 +146,14 @@
         var $ul     = $menu.find('> ul'), $li
         
         $.each(items, function(i, n) {
+            var icon = ''
+            
+            if (n.icon) icon = '<i class="fa fa-'+ n.icon +'"></i>'
             if (n.title == 'diver') {
                 $li = $('<li class="diver"></li>')
             } else {
-                $li = $('<li>'+ n.title +'</li>')
+                $li = $('<li><span class="icon">'+ icon +'</span><span class="title">'+ n.title +'</span></li>')
+                if (n.func && typeof n.func == 'string') n.func = n.func.toFunc()
                 if (n.func) {
                     $li.on('click', function(evt) {
                         that.hide()
@@ -147,7 +169,7 @@
         
         if ($(window).width() < posX + $menu.width())   posX -= $menu.width()
         if ($(window).height() < posY + $menu.height()) posY -= $menu.height()
-
+        
         $menu.css({'left':posX, 'top':posY}).show()
         
         if (options.shadow)

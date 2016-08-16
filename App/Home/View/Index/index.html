@@ -10,7 +10,8 @@
 <link href="__PUBLIC__/BJUI/themes/css/bootstrap.min.css" rel="stylesheet">
 <!-- core - css -->
 <link href="__PUBLIC__/BJUI/themes/css/style.css" rel="stylesheet">
-<link href="__PUBLIC__/BJUI/themes/purple/core.css" id="bjui-link-theme" rel="stylesheet">
+<!--<link href="__PUBLIC__/BJUI/themes/purple/core.css" id="bjui-link-theme" rel="stylesheet">-->
+<link href="__PUBLIC__/BJUI/themes/blue/core.css" id="bjui-link-theme" rel="stylesheet">
 <!-- plug - css -->
 <link href="__PUBLIC__/BJUI/plugins/kindeditor_4.1.10/themes/default/default.css" rel="stylesheet">
 <link href="__PUBLIC__/BJUI/plugins/colorpicker/css/bootstrap-colorpicker.min.css" rel="stylesheet">
@@ -78,6 +79,7 @@
 <!-- bootstrap plugins -->
 <script src="__PUBLIC__/BJUI/plugins/bootstrap.min.js"></script>
 <script src="__PUBLIC__/BJUI/plugins/bootstrapSelect/bootstrap-select.min.js"></script>
+<script src="__PUBLIC__/BJUI/plugins/bootstrapSelect/defaults-zh_CN.min.js"></script>
 <!-- icheck -->
 <script src="__PUBLIC__/BJUI/plugins/icheck/icheck.min.js"></script>
 <!-- dragsort -->
@@ -92,6 +94,8 @@
 <script src="__PUBLIC__/BJUI/plugins/other/jquery.autosize.js"></script>
 <link href="__PUBLIC__/BJUI/plugins/uploadify/css/uploadify.css" rel="stylesheet">
 <script src="__PUBLIC__/BJUI/plugins/uploadify/scripts/jquery.uploadify.min.js"></script>
+
+<script src="__PUBLIC__/BJUI/plugins/download/jquery.fileDownload.js"></script>
 <!-- init -->
 <script type="text/javascript">
 $(function() {
@@ -103,19 +107,25 @@ $(function() {
         ajaxTimeout  : 5000, //[可选]全局Ajax请求超时时间(毫秒)
         alertTimeout : 3000, //[可选]信息提示[info/correct]自动关闭延时(毫秒)
         pageInfo     : {pageCurrent:'pageCurrent', pageSize:'pageSize', orderField:'orderField', orderDirection:'orderDirection'}, //[可选]分页参数
+        alertMsg     : {displayPosition:'topcenter', displayMode:'slide', alertTimeout:3000}, //[可选]信息提示的显示位置，显隐方式，及[info/correct]方式时自动关闭延时(毫秒)
         keys         : {statusCode:'statusCode', message:'message'}, //[可选]
-        ui           : {showSlidebar:true, hideMode:'display', clientPaging:true}, //[可选]clientPaging:在客户端响应分页及排序参数
+        ui           : {
+                        windowWidth      : 0, //框架显示宽度，0=100%宽，> 600为则居中显示
+                        showSlidebar     : true, //[可选]左侧导航栏锁定/隐藏
+                        clientPaging     : true, //[可选]是否在客户端响应分页及排序参数
+                        overwriteHomeTab : false //[可选]当打开一个未定义id的navtab时，是否可以覆盖主navtab(我的主页)
+                    }, //[可选]clientPaging:在客户端响应分页及排序参数
         debug        : true,    // [可选]调试模式 [true|false，默认false]
         theme        : 'purple' // 若有Cookie['bjui_theme'],优先选择Cookie['bjui_theme']。皮肤[五种皮肤:default, orange, purple, blue, red, green]
-    })
+    });
     //时钟
-    var today = new Date(), time = today.getTime()
-    $('#bjui-date').html(today.formatDate('yyyy/MM/dd'))
+    var today = new Date(), time = today.getTime();
+    $('#bjui-date').html(today.formatDate('yyyy/MM/dd'));
     setInterval(function() {
         today = new Date(today.setSeconds(today.getSeconds() + 1))
         $('#bjui-clock').html(today.formatDate('HH:mm:ss'))
-    }, 1000)
-})
+    }, 1000);
+});
 
 //console.log('IE:'+ (!$.support.leadingWhitespace))
 //菜单-事件
@@ -134,21 +144,41 @@ function MainMenuClick(event, treeId, treeNode) {
     event.preventDefault()
 }
 </script>
+    <!-- for doc begin -->
+    <link type="text/css" rel="stylesheet" href="__PUBLIC__/js/syntaxhighlighter-2.1.382/styles/shCore.css"/>
+    <link type="text/css" rel="stylesheet" href="__PUBLIC__/js/syntaxhighlighter-2.1.382/styles/shThemeEclipse.css"/>
+    <script type="text/javascript" src="__PUBLIC__/js/syntaxhighlighter-2.1.382/scripts/brush.js"></script>
 
+    <script type="text/javascript">
+        $(function(){
+            SyntaxHighlighter.config.clipboardSwf = '__PUBLIC__/js/syntaxhighlighter-2.1.382/scripts/clipboard.swf'
+            $(document).on(BJUI.eventType.initUI, function(e) {
+                SyntaxHighlighter.highlight();
+            })
+        })
+    </script>
+    <!-- for doc end -->
 </head>
 <body>
     <!--[if lte IE 7]>
         <div id="errorie"><div>您还在使用老掉牙的IE，正常使用系统前请升级您的浏览器到 IE8以上版本 <a target="_blank" href="http://windows.microsoft.com/zh-cn/internet-explorer/ie-8-worldwide-languages">点击升级</a>&nbsp;&nbsp;强烈建议您更改换浏览器：<a href="http://down.tech.sina.com.cn/content/40975.html" target="_blank">谷歌 Chrome</a></div></div>
     <![endif]-->
-    <header class="navbar navbar-default" id="bjui-header">
-        <div class="navbar-header">
+<div id="bjui-window">
+    <header id="bjui-header" class="navbar navbar-default" >
+        <div class="bjui-navbar-header">
             <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bjui-navbar-collapse">
-                <span class="sr-only">Toggle navigation</span> <span class="icon-bar"></span> <span class="icon-bar"></span> <span class="icon-bar"></span>
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
             </button>
-            <a class="navbar-brand" href="#">{$Think.config.WEB_SITE_TITLE}<span style="font-size:14px">{$Think.config.WEB_VER}</span><!--<img src="__PUBLIC__/images/logo.png">--></a>
+            <a class="navbar-brand" href="#">{$Think.config.WEB_SITE_TITLE}
+                <span style="font-size:14px">{$Think.config.WEB_VER}</span>
+                <!--<img src="__PUBLIC__/images/logo.png">-->
+            </a>
         </div>
         <nav class="collapse navbar-collapse" id="bjui-navbar-collapse">
-            <ul class="nav navbar-nav navbar-right">
+            <ul class="nav navbar-nav bjui-navbar-right">
                 <li class="datetime"><div><span id="bjui-date"></span><br><i class="fa fa-clock-o"></i> <span id="bjui-clock"></span></div></li>
                 <li><a href="{:U('public/online')}" data-toggle="dialog" data-id="online" data-mask="true" data-width="600" data-height="300">在线 <span class="badge"><php>$where['update_time']=array('gt',time()-600);echo M('user')->where($where)->count();</php></span></a></li>
                 <li class="dropdown"><a href="#" class="dropdown-toggle" data-toggle="dropdown">我的账户 <span class="caret"></span></a>
@@ -173,68 +203,68 @@ function MainMenuClick(event, treeId, treeNode) {
         </nav>
     </header>
 
-    <div class="bjui-leftside" id="bjui-leftside">
-        <div id="bjui-sidebar-s">
-            <div class="collapse">
-                <div class="toggleCollapse"><div title="展开菜单"><i class="fa fa-angle-double-right"></i></div></div>
+    <div id="bjui-container">
+
+        <div class="bjui-leftside" id="bjui-leftside">
+            <div id="bjui-sidebar-s">
+                <div class="collapse">
+                    <div class="toggleCollapse"><div title="展开菜单"><i class="fa fa-angle-double-right"></i></div></div>
+                </div>
             </div>
-        </div>
-        <div id="bjui-sidebar">
-            <div class="toggleCollapse"><h2>主菜单</h2><div title="收缩菜单"><i class="fa fa-angle-double-left"></i></div></div>
-            <div class="panel-group panel-main" data-toggle="accordion" id="bjui-accordionmenu" data-heightbox="#bjui-sidebar" data-offsety="26">
-			   
-			    <php> $cate=M('menu')->where('level=0')->order('sort')->select();</php>
-                <foreach name="cate" item="c">
-                 <if condition="authcheck('Home/'.$c[alink],session('uid'))">
-			      <if condition="$c.sort EQ 0 ">
-                <div class="panel panel-default">
-                    <div class="panel-heading panelContent">
-                        <h4 class="panel-title"><a data-toggle="collapse" data-parent="#bjui-accordionmenu" href="#bjui-collapse{$c.sort}" class="active"><i class="fa fa-caret-square-o-down"></i>&nbsp;{$c.catename}</a></h4>
-                    </div>
-                    <div id="bjui-collapse{$c.sort}" class="panel-collapse panelContent collapse in">
-                        <div class="panel-body" >
-                            <ul id="bjui-tree{$c.id}" class="ztree ztree_main" data-toggle="ztree" data-on-click="MainMenuClick" data-expand-all="true">
-				 <else/>
-				 <div class="panel panel-default">
-                    <div class="panel-heading panelContent">
-                        <h4 class="panel-title"><a data-toggle="collapse" data-parent="#bjui-accordionmenu" href="#bjui-collapse{$c.sort}" class="" ><i class="fa fa-caret-square-o-right"></i>&nbsp;{$c.catename}</a></h4>
-                    </div>
-                    <div id="bjui-collapse{$c.sort}" class="panel-collapse panelContent collapse">
-                        <div class="panel-body">
-                            <ul id="bjui-tree{$c.id}" class="ztree ztree_main" data-toggle="ztree" data-on-click="MainMenuClick" data-expand-all="false">
-				 </if>
-							<php> $cate1=M('menu')->where('level=1 and pid='.$c['id'])->order('sort')->select();</php>
-							  <foreach name="cate1" item="v">
-							    <if condition="authcheck('Home/'.$v[alink],session('uid'))">
-								   <php>$count1=M('menu')->where('level=2 and pid='.$v['id'])->count(id);</php>
-								    <if condition="$count1 EQ 0 ">
-                                     <li data-id="{$v.id}" data-pid="{$c.id}" data-url="index.php/home/{$v.alink}" data-tabid="{$v.alink}">{$v.catename}</li>
-								     <else/>
-								     <li data-id="{$v.id}" data-pid="{$c.id}" >{$v.catename}</li>
-								     </if>
-								  <php> $cate2=M('menu')->where('level=2 and pid='.$v['id'])->order('sort')->select();</php>
-							      <foreach name="cate2" item="vv">
-							       <if condition="authcheck('Home/'.$vv[alink],session('uid'))">
-                                   <li data-id="{$vv.id}" data-pid="{$v.id}" data-url="index.php/home/{$vv.alink}" data-tabid="{$vv.alink}">{$vv.catename}</li>
-								  </if>
-                                  </foreach>
-								</if>
+            <div id="bjui-sidebar">
+                <!--<div class="toggleCollapse"><h2>主菜单</h2><div title="收缩菜单"><i class="fa fa-angle-double-left"></i></div></div>-->
+                <div class="toggleCollapse"><h2><i class="fa fa-bars"></i> 导航栏 <i class="fa fa-bars"></i></h2><a href="javascript:;" class="lock"><i class="fa fa-lock"></i></a></div>
+                <div class="panel-group panel-main" data-toggle="accordion" id="bjui-accordionmenu" data-heightbox="#bjui-sidebar" data-offsety="26">
+
+                    <php> $cate=M('menu')->where('level=0')->order('sort')->select();</php>
+                    <foreach name="cate" item="c">
+                        <if condition="authcheck('Home/'.$c[alink],session('uid'))">
+                            <if condition="$c.sort EQ 0 ">
+                                <div class="panel panel-default">
+                                    <div class="panel-heading panelContent">
+                                        <h4 class="panel-title"><a data-toggle="collapse" data-parent="#bjui-accordionmenu" href="#bjui-collapse{$c.sort}" class="active"><i class="fa fa-caret-square-o-down"></i>&nbsp;{$c.catename}</a></h4>
+                                    </div>
+                                    <div id="bjui-collapse{$c.sort}" class="panel-collapse panelContent collapse in">
+                                        <div class="panel-body" >
+                                            <ul id="bjui-tree{$c.id}" class="ztree ztree_main" data-toggle="ztree" data-on-click="MainMenuClick" data-expand-all="true">
+                                                <else/>
+                                                <div class="panel panel-default">
+                                                    <div class="panel-heading panelContent">
+                                                        <h4 class="panel-title"><a data-toggle="collapse" data-parent="#bjui-accordionmenu" href="#bjui-collapse{$c.sort}" class="" ><i class="fa fa-caret-square-o-right"></i>&nbsp;{$c.catename}</a></h4>
+                                                    </div>
+                                                    <div id="bjui-collapse{$c.sort}" class="panel-collapse panelContent collapse">
+                                                        <div class="panel-body">
+                                                            <ul id="bjui-tree{$c.id}" class="ztree ztree_main" data-toggle="ztree" data-on-click="MainMenuClick" data-expand-all="false">
+                            </if>
+                            <php> $cate1=M('menu')->where('level=1 and pid='.$c['id'])->order('sort')->select();</php>
+                            <foreach name="cate1" item="v">
+                                <if condition="authcheck('Home/'.$v[alink],session('uid'))">
+                                    <php>$count1=M('menu')->where('level=2 and pid='.$v['id'])->count(id);</php>
+                                    <if condition="$count1 EQ 0 ">
+                                        <li data-id="{$v.id}" data-pid="{$c.id}" data-url="index.php/home/{$v.alink}" data-tabid="{$v.alink}">{$v.catename}</li>
+                                        <else/>
+                                        <li data-id="{$v.id}" data-pid="{$c.id}" >{$v.catename}</li>
+                                    </if>
+                                    <php> $cate2=M('menu')->where('level=2 and pid='.$v['id'])->order('sort')->select();</php>
+                                    <foreach name="cate2" item="vv">
+                                        <if condition="authcheck('Home/'.$vv[alink],session('uid'))">
+                                            <li data-id="{$vv.id}" data-pid="{$v.id}" data-url="index.php/home/{$vv.alink}" data-tabid="{$vv.alink}">{$vv.catename}</li>
+                                        </if>
+                                    </foreach>
+                                </if>
                             </foreach>
                             </ul>
-                        </div>
-                    </div>
-                    <div class="panelFooter"><div class="panelFooterContent"></div></div>
                 </div>
-				
-				 </if>
-	             </foreach>
-                
-				
-				
             </div>
+            <div class="panelFooter"><div class="panelFooterContent"></div></div>
         </div>
+
+        </if>
+        </foreach>
+
     </div>
-    <div id="bjui-container">
+</div>
+    </div>
         <div id="bjui-navtab" class="tabsPage">
             <div class="tabsPageHeader">
                 <div class="tabsPageHeaderContent">
@@ -417,7 +447,8 @@ function MainMenuClick(event, treeId, treeNode) {
     <footer id="bjui-footer" style="text-align:left">
 	您好！{$Think.session.depname} {$Think.session.posname} {$Think.session.truename} ({$Think.session.username}) 您的IP:{$Think.session.loginip}   登录时间:{$Think.session.logintime}
 
-	<span style="float:right">Power by <a href="http://www.xinyou88.com" target=_blank>丹贸网络科技有限公司</a> 服务热线：400-000-9981</span> <div style="display:none"><script src="http://s96.cnzz.com/stat.php?id=1618465&web_id=1618465" language="JavaScript"></script></div>
+	<span style="float:right">Power by <a href="javascript:void(0);" target=_blank>丹贸网络科技有限公司</a> 服务热线：400-000-9981</span> <div style="display:none"><script src="http://s96.cnzz.com/stat.php?id=1618465&web_id=1618465" language="JavaScript"></script></div>
     </footer>
+</div>
 </body>
 </html>
