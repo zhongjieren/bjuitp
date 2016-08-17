@@ -10,8 +10,7 @@
 <link href="__PUBLIC__/BJUI/themes/css/bootstrap.min.css" rel="stylesheet">
 <!-- core - css -->
 <link href="__PUBLIC__/BJUI/themes/css/style.css" rel="stylesheet">
-<!--<link href="__PUBLIC__/BJUI/themes/purple/core.css" id="bjui-link-theme" rel="stylesheet">-->
-<link href="__PUBLIC__/BJUI/themes/blue/core.css" id="bjui-link-theme" rel="stylesheet">
+<link href="__PUBLIC__/BJUI/themes/purple/core.css" id="bjui-link-theme" rel="stylesheet">
 <!-- plug - css -->
 <link href="__PUBLIC__/BJUI/plugins/kindeditor_4.1.10/themes/default/default.css" rel="stylesheet">
 <link href="__PUBLIC__/BJUI/plugins/colorpicker/css/bootstrap-colorpicker.min.css" rel="stylesheet">
@@ -165,7 +164,7 @@ function MainMenuClick(event, treeId, treeNode) {
     <![endif]-->
 <div id="bjui-window">
     <header id="bjui-header" class="navbar navbar-default" >
-        <div class="bjui-navbar-header">
+        <div class="navbar-header">
             <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bjui-navbar-collapse">
                 <span class="sr-only">Toggle navigation</span>
                 <span class="icon-bar"></span>
@@ -174,11 +173,10 @@ function MainMenuClick(event, treeId, treeNode) {
             </button>
             <a class="navbar-brand" href="#">{$Think.config.WEB_SITE_TITLE}
                 <span style="font-size:14px">{$Think.config.WEB_VER}</span>
-                <!--<img src="__PUBLIC__/images/logo.png">-->
             </a>
         </div>
         <nav class="collapse navbar-collapse" id="bjui-navbar-collapse">
-            <ul class="nav navbar-nav bjui-navbar-right">
+            <ul class="nav navbar-nav navbar-right">
                 <li class="datetime"><div><span id="bjui-date"></span><br><i class="fa fa-clock-o"></i> <span id="bjui-clock"></span></div></li>
                 <li><a href="{:U('public/online')}" data-toggle="dialog" data-id="online" data-mask="true" data-width="600" data-height="300">在线 <span class="badge"><php>$where['update_time']=array('gt',time()-600);echo M('user')->where($where)->count();</php></span></a></li>
                 <li class="dropdown"><a href="#" class="dropdown-toggle" data-toggle="dropdown">我的账户 <span class="caret"></span></a>
@@ -254,17 +252,17 @@ function MainMenuClick(event, treeId, treeNode) {
                                 </if>
                             </foreach>
                             </ul>
+                            </div>
+                        </div>
+                        <div class="panelFooter"><div class="panelFooterContent"></div></div>
+                    </div>
+
+                    </if>
+                    </foreach>
+
                 </div>
             </div>
-            <div class="panelFooter"><div class="panelFooterContent"></div></div>
         </div>
-
-        </if>
-        </foreach>
-
-    </div>
-</div>
-    </div>
         <div id="bjui-navtab" class="tabsPage">
             <div class="tabsPageHeader">
                 <div class="tabsPageHeaderContent">
@@ -283,29 +281,29 @@ function MainMenuClick(event, treeId, treeNode) {
                 <div class="page unitBox">
 				    <div class="bjui-pageHeader" style="background:#FFF;">
                         <div style="padding: 0 15px;">
-        <h4 style="margin-bottom:20px;">
-            {$Think.config.WEB_SITE_TITLE}　<small>基于X-Mis智能管理系统，快速开发而来，想管理什么，建表即可！</small>
-        </h4>
-        <div style="float:left; width:157px;">
-            <div class="alert alert-info" role="alert" style="margin:0 0 5px; padding:10px;">
-                <img src="__PUBLIC__/images/weixin.png" width="135">
-            </div>
-        </div>
-        <div style="margin-left:170px; margin-top:22px; padding-left:6px;">
-            <span style="padding-left:10px;">X-Mis智能开发平台：</span><a href="http://www.xinyou88.net/" target="_blank">http://www.xinyou88.net/</a>   QQ群交流：147654231
-        </div>
-        <div class="row" style="margin-left:170px; margin-top:10px;">
-		 <form action="__URL__/index/navTabId/{:CONTROLLER_NAME}" class="pageForm" data-toggle="validate">
-		 <input type="hidden" name="id" value="{$Think.session.uid}">
-            <div class="col-md-12" style="padding:5px;">
-                <div class="alert alert-success" role="alert" style="margin:0 0 5px; padding:5px 15px;">
-                    <h5>我的便签、记事本 &nbsp;<button type="submit" class="btn-default">保存</button></h5>
-                    <textarea style="width:100%;height:75px;border:0px;line-height:150%" name="bian">{$Rs.bian}</textarea> 
-                </div>
-            </div>
-		 </form>
-        </div>
-    </div>
+                            <h4 style="margin-bottom:20px;">
+                                {$Think.config.WEB_SITE_TITLE}　<small>基于X-Mis智能管理系统，快速开发而来，想管理什么，建表即可！</small>
+                            </h4>
+                            <div style="float:left; width:157px;">
+                                <div class="alert alert-info" role="alert" style="margin:0 0 5px; padding:10px;">
+                                    <img src="__PUBLIC__/images/weixin.png" width="135">
+                                </div>
+                            </div>
+                            <div style="margin-left:170px; margin-top:22px; padding-left:6px;">
+                                <span style="padding-left:10px;">X-Mis智能开发平台：</span><a href="http://www.xinyou88.net/" target="_blank">http://www.xinyou88.net/</a>   QQ群交流：147654231
+                            </div>
+                            <div class="row" style="margin-left:170px; margin-top:10px;">
+                             <form action="__URL__/index/navTabId/{:CONTROLLER_NAME}" class="pageForm" data-toggle="validate">
+                             <input type="hidden" name="id" value="{$Think.session.uid}">
+                                <div class="col-md-12" style="padding:5px;">
+                                    <div class="alert alert-success" role="alert" style="margin:0 0 5px; padding:5px 15px;">
+                                        <h5>我的便签、记事本 &nbsp;<button type="submit" class="btn-default">保存</button></h5>
+                                        <textarea style="width:100%;height:75px;border:0px;line-height:150%" name="bian">{$Rs.bian}</textarea>
+                                    </div>
+                                </div>
+                             </form>
+                            </div>
+                        </div>
                     </div>
                     <div class="bjui-pageFormContent" data-layout-h="150">
 					<!--//-->
